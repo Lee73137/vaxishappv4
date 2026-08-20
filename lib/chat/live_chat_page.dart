@@ -12,7 +12,6 @@ import 'package:url_launcher/url_launcher.dart';
 import '../dashboard/tabs/chat_tab.dart';
 import '../theme/app_colors.dart';
 import '../widgets/glossy_widgets.dart';
-import 'how_to_chat_sheet.dart';
 import 'models/chat_message.dart';
 import 'services/chat_service.dart';
 
@@ -45,18 +44,11 @@ class _LiveChatPageState extends State<LiveChatPage> {
   void initState() {
     super.initState();
     _load();
-    _pollTimer = Timer.periodic(const Duration(seconds: 4), (_) => _load(silent: true));
-    _maybeShowHowToChat();
+    _pollTimer = Timer.periodic(
+      const Duration(seconds: 4),
+      (_) => _load(silent: true),
+    );
   }
-
-  Future<void> _maybeShowHowToChat() async {
-    if (await hasSeenHowToChat()) return;
-    if (!mounted) return;
-    await showHowToChatSheet(context);
-    await markHowToChatSeen();
-  }
-
-  void _showHowToChat() => showHowToChatSheet(context);
 
   @override
   void dispose() {
@@ -117,7 +109,9 @@ class _LiveChatPageState extends State<LiveChatPage> {
         });
       } else {
         final picked = await ImagePicker().pickImage(
-          source: source == _AttachSource.camera ? ImageSource.camera : ImageSource.gallery,
+          source: source == _AttachSource.camera
+              ? ImageSource.camera
+              : ImageSource.gallery,
           imageQuality: 85,
         );
         if (picked == null) return;
@@ -130,7 +124,11 @@ class _LiveChatPageState extends State<LiveChatPage> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not access that. Check app permissions and try again.')),
+          const SnackBar(
+            content: Text(
+              'Could not access that. Check app permissions and try again.',
+            ),
+          ),
         );
       }
     }
@@ -158,7 +156,9 @@ class _LiveChatPageState extends State<LiveChatPage> {
       if (uploaded == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Failed to upload attachment. Please try again.')),
+            const SnackBar(
+              content: Text('Failed to upload attachment. Please try again.'),
+            ),
           );
           setState(() => _sending = false);
         }
@@ -182,7 +182,9 @@ class _LiveChatPageState extends State<LiveChatPage> {
     );
     if (!success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to send message. Please try again.')),
+        const SnackBar(
+          content: Text('Failed to send message. Please try again.'),
+        ),
       );
     }
     await _load();
@@ -199,7 +201,10 @@ class _LiveChatPageState extends State<LiveChatPage> {
         title: const Text('Delete message?'),
         content: const Text("This can't be undone."),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
             child: const Text('Delete', style: TextStyle(color: brandRed)),
@@ -212,7 +217,9 @@ class _LiveChatPageState extends State<LiveChatPage> {
     final success = await ChatService.deleteMessage(username, message.id);
     if (!success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to delete message. Please try again.')),
+        const SnackBar(
+          content: Text('Failed to delete message. Please try again.'),
+        ),
       );
       return;
     }
@@ -239,47 +246,63 @@ class _LiveChatPageState extends State<LiveChatPage> {
     final colors = context.colors;
     return Scaffold(
       backgroundColor: colors.scaffoldBackground,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _Header(onMessengerTap: _openMessengerScreen, onHelpTap: _showHowToChat),
-            Expanded(
-              child: _loading
-                  ? const Center(child: CircularProgressIndicator(color: brandRed))
-                  : RefreshIndicator(
-                      color: brandRed,
-                      onRefresh: () => _load(silent: true),
-                      child: _messages.isEmpty
-                          ? LayoutBuilder(
-                              builder: (context, constraints) => ListView(
+      body: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: SafeArea(
+          child: Column(
+            children: [
+              _Header(onMessengerTap: _openMessengerScreen),
+              Expanded(
+                child: _loading
+                    ? const Center(
+                        child: CircularProgressIndicator(color: brandRed),
+                      )
+                    : RefreshIndicator(
+                        color: brandRed,
+                        onRefresh: () => _load(silent: true),
+                        child: _messages.isEmpty
+                            ? LayoutBuilder(
+                                builder: (context, constraints) => ListView(
+                                  physics:
+                                      const AlwaysScrollableScrollPhysics(),
+                                  children: [
+                                    SizedBox(
+                                      height: constraints.maxHeight,
+                                      child: const _EmptyState(),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            : ListView.builder(
+                                controller: _scrollController,
                                 physics: const AlwaysScrollableScrollPhysics(),
-                                children: [
-                                  SizedBox(height: constraints.maxHeight, child: const _EmptyState()),
-                                ],
+                                padding: EdgeInsets.fromLTRB(
+                                  14.w,
+                                  14.h,
+                                  14.w,
+                                  14.h,
+                                ),
+                                itemCount: _messages.length,
+                                itemBuilder: (context, index) => _MessageBubble(
+                                  message: _messages[index],
+                                  onDelete: () =>
+                                      _deleteMessage(_messages[index]),
+                                ),
                               ),
-                            )
-                          : ListView.builder(
-                              controller: _scrollController,
-                              physics: const AlwaysScrollableScrollPhysics(),
-                              padding: EdgeInsets.fromLTRB(14.w, 14.h, 14.w, 14.h),
-                              itemCount: _messages.length,
-                              itemBuilder: (context, index) => _MessageBubble(
-                                message: _messages[index],
-                                onDelete: () => _deleteMessage(_messages[index]),
-                              ),
-                            ),
-                    ),
-            ),
-            _Composer(
-              controller: _controller,
-              sending: _sending,
-              onSend: _send,
-              onAttach: _pickAttachment,
-              pendingFileName: _pendingFileName,
-              pendingIsImage: _pendingIsImage,
-              onRemoveAttachment: _removePendingAttachment,
-            ),
-          ],
+                      ),
+              ),
+              _Composer(
+                controller: _controller,
+                sending: _sending,
+                onSend: _send,
+                onAttach: _pickAttachment,
+                pendingFileName: _pendingFileName,
+                pendingIsImage: _pendingIsImage,
+                onRemoveAttachment: _removePendingAttachment,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -328,7 +351,11 @@ class _AttachSheet extends StatelessWidget {
 }
 
 class _AttachOption extends StatelessWidget {
-  const _AttachOption({required this.icon, required this.label, required this.onTap});
+  const _AttachOption({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
 
   final IconData icon;
   final String label;
@@ -338,17 +365,19 @@ class _AttachOption extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       leading: Icon(icon, color: brandRed),
-      title: Text(label, style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600)),
+      title: Text(
+        label,
+        style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600),
+      ),
       onTap: onTap,
     );
   }
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.onMessengerTap, required this.onHelpTap});
+  const _Header({required this.onMessengerTap});
 
   final VoidCallback onMessengerTap;
-  final VoidCallback onHelpTap;
 
   @override
   Widget build(BuildContext context) {
@@ -361,7 +390,10 @@ class _Header extends StatelessWidget {
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [brandRed.withValues(alpha: 0.85), brandRedDark.withValues(alpha: 0.9)],
+              colors: [
+                brandRed.withValues(alpha: 0.85),
+                brandRedDark.withValues(alpha: 0.9),
+              ],
             ),
           ),
           child: Row(
@@ -390,13 +422,12 @@ class _Header extends StatelessWidget {
                 ),
               ),
               IconButton(
-                onPressed: onHelpTap,
-                icon: Icon(Icons.help_outline_rounded, color: Colors.white, size: 22.sp),
-                tooltip: 'How to use Chat Support',
-              ),
-              IconButton(
                 onPressed: onMessengerTap,
-                icon: Icon(Icons.facebook_rounded, color: Colors.white, size: 24.sp),
+                icon: Icon(
+                  Icons.facebook_rounded,
+                  color: Colors.white,
+                  size: 24.sp,
+                ),
                 tooltip: 'Message us on Facebook instead',
               ),
             ],
@@ -427,7 +458,9 @@ class _MessageBubble extends StatelessWidget {
       child: GestureDetector(
         onLongPress: canDelete ? onDelete : null,
         child: Container(
-          constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width * 0.75,
+          ),
           margin: EdgeInsets.only(bottom: 10.h),
           padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
           decoration: BoxDecoration(
@@ -457,7 +490,9 @@ class _MessageBubble extends StatelessWidget {
                 Padding(
                   padding: EdgeInsets.only(bottom: 3.h),
                   child: Text(
-                    (message.staffName?.trim().isNotEmpty ?? false) ? message.staffName! : 'Support',
+                    (message.staffName?.trim().isNotEmpty ?? false)
+                        ? message.staffName!
+                        : 'Support',
                     style: TextStyle(
                       fontSize: 10.sp,
                       fontWeight: FontWeight.w700,
@@ -471,7 +506,9 @@ class _MessageBubble extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 13.sp,
                     fontStyle: FontStyle.italic,
-                    color: isClinic ? Colors.white.withValues(alpha: 0.8) : colors.textSecondary,
+                    color: isClinic
+                        ? Colors.white.withValues(alpha: 0.8)
+                        : colors.textSecondary,
                     height: 1.3,
                   ),
                 )
@@ -495,7 +532,9 @@ class _MessageBubble extends StatelessWidget {
                 DateFormat('MMM d, h:mm a').format(message.createdAt),
                 style: TextStyle(
                   fontSize: 9.5.sp,
-                  color: isClinic ? Colors.white.withValues(alpha: 0.75) : colors.textTertiary,
+                  color: isClinic
+                      ? Colors.white.withValues(alpha: 0.75)
+                      : colors.textTertiary,
                 ),
               ),
             ],
@@ -518,7 +557,9 @@ class _AttachmentContent extends StatelessWidget {
     if (message.isImageAttachment) {
       return GestureDetector(
         onTap: () => Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => _FullScreenImage(url: message.attachmentUrl!)),
+          MaterialPageRoute(
+            builder: (_) => _FullScreenImage(url: message.attachmentUrl!),
+          ),
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(12.r),
@@ -532,7 +573,9 @@ class _AttachmentContent extends StatelessWidget {
               return SizedBox(
                 width: 180.w,
                 height: 180.w,
-                child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                child: const Center(
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
               );
             },
             errorBuilder: (_, __, ___) => SizedBox(
@@ -556,13 +599,19 @@ class _AttachmentContent extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
         decoration: BoxDecoration(
-          color: isClinic ? Colors.white.withValues(alpha: 0.15) : colors.surfaceVariant,
+          color: isClinic
+              ? Colors.white.withValues(alpha: 0.15)
+              : colors.surfaceVariant,
           borderRadius: BorderRadius.circular(12.r),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.insert_drive_file_rounded, size: 20.sp, color: isClinic ? Colors.white : brandRed),
+            Icon(
+              Icons.insert_drive_file_rounded,
+              size: 20.sp,
+              color: isClinic ? Colors.white : brandRed,
+            ),
             SizedBox(width: 8.w),
             Flexible(
               child: Column(
@@ -582,13 +631,20 @@ class _AttachmentContent extends StatelessWidget {
                   if (message.attachmentSize != null)
                     Text(
                       _formatFileSize(message.attachmentSize!),
-                      style: TextStyle(fontSize: 9.5.sp, color: isClinic ? Colors.white70 : colors.textSecondary),
+                      style: TextStyle(
+                        fontSize: 9.5.sp,
+                        color: isClinic ? Colors.white70 : colors.textSecondary,
+                      ),
                     ),
                 ],
               ),
             ),
             SizedBox(width: 6.w),
-            Icon(Icons.download_rounded, size: 16.sp, color: isClinic ? Colors.white70 : colors.textSecondary),
+            Icon(
+              Icons.download_rounded,
+              size: 16.sp,
+              color: isClinic ? Colors.white70 : colors.textSecondary,
+            ),
           ],
         ),
       ),
@@ -678,7 +734,11 @@ class _Composer extends StatelessWidget {
             children: [
               IconButton(
                 onPressed: sending ? null : onAttach,
-                icon: Icon(Icons.attach_file_rounded, color: brandRed, size: 22.sp),
+                icon: Icon(
+                  Icons.attach_file_rounded,
+                  color: brandRed,
+                  size: 22.sp,
+                ),
                 tooltip: 'Attach photo or file',
               ),
               Expanded(
@@ -689,10 +749,16 @@ class _Composer extends StatelessWidget {
                   textCapitalization: TextCapitalization.sentences,
                   decoration: InputDecoration(
                     hintText: 'Type a message…',
-                    hintStyle: TextStyle(fontSize: 13.sp, color: colors.textTertiary),
+                    hintStyle: TextStyle(
+                      fontSize: 13.sp,
+                      color: colors.textTertiary,
+                    ),
                     filled: true,
                     fillColor: colors.surfaceVariant,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 16.w,
+                      vertical: 10.h,
+                    ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(24.r),
                       borderSide: BorderSide.none,
@@ -716,10 +782,16 @@ class _Composer extends StatelessWidget {
                           padding: EdgeInsets.all(12.w),
                           child: const CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
                           ),
                         )
-                      : Icon(Icons.send_rounded, color: Colors.white, size: 18.sp),
+                      : Icon(
+                          Icons.send_rounded,
+                          color: Colors.white,
+                          size: 18.sp,
+                        ),
                 ),
               ),
             ],
@@ -771,7 +843,11 @@ class _PendingAttachmentChip extends StatelessWidget {
           SizedBox(width: 6.w),
           InkWell(
             onTap: onRemove,
-            child: Icon(Icons.close_rounded, size: 16.sp, color: colors.textSecondary),
+            child: Icon(
+              Icons.close_rounded,
+              size: 16.sp,
+              color: colors.textSecondary,
+            ),
           ),
         ],
       ),
@@ -807,7 +883,11 @@ class _EmptyState extends StatelessWidget {
             SizedBox(height: 16.h),
             Text(
               'No messages yet',
-              style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w700, color: colors.textPrimary),
+              style: TextStyle(
+                fontSize: 15.sp,
+                fontWeight: FontWeight.w700,
+                color: colors.textPrimary,
+              ),
             ),
             SizedBox(height: 6.h),
             Text(

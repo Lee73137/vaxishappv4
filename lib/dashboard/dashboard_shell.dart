@@ -52,6 +52,7 @@ class _DashboardShellState extends State<DashboardShell> {
   }
 
   void _setIndex(int index) {
+    FocusManager.instance.primaryFocus?.unfocus();
     setState(() => _index = index);
     // Lets the FCM foreground listener know not to interrupt with a banner
     // when the user is already looking at the chat — it'll show up there
