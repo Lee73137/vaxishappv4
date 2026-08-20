@@ -97,6 +97,7 @@ class _LiveChatPageState extends State<LiveChatPage> {
   }
 
   Future<void> _pickAttachment() async {
+    FocusScope.of(context).unfocus();
     final source = await showModalBottomSheet<_AttachSource>(
       context: context,
       backgroundColor: Colors.transparent,
