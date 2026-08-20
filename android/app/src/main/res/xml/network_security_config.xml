@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The vaxilifecorp API is served over plain HTTP, which Android blocks by
+     default since API 28. This scopes the cleartext exception to just that
+     domain instead of allowing it app-wide. -->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">vaxilifecorp.com</domain>
+    </domain-config>
+</network-security-config>

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "850657218673",
+    "project_id": "vaxishappv4",
+    "storage_bucket": "vaxishappv4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:850657218673:android:954f19e2866db5ee3fcbd0",
+        "android_client_info": {
+          "package_name": "com.vaxilifecorp.vaxishapp_plus"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD9J7uh5XbzWdWx7RFuxAsBWU-SOcylSAQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
