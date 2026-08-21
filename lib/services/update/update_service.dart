@@ -18,7 +18,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 /// older than what's currently published, leaving the caller to show its
 /// own blocking screen.
 class UpdateService {
-  static const String _iosBundleId = 'com.vaxilifecorp.vaxishapp_plus';
+  static const String _iosBundleId = 'com.vaxilifecorp.vaxishappPlus';
 
   static Future<String?> checkAndHandle() async {
     if (Platform.isAndroid) {

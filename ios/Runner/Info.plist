@@ -30,6 +30,8 @@
 	<string>This app needs notification permission to send you important updates.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>This app uses your location to record where you're logging in from.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>This app uses your location to record where you're logging in from.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>This app uses your camera to attach a photo to a chat message.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
